@@ -1,0 +1,6 @@
+[submodule "stdBLAS"]
+	path = stdBLAS
+	url = https://github.com/kokkos/stdBLAS.git
+[submodule "mdspan"]
+	path = mdspan
+	url = https://github.com/kokkos/mdspan.git
