@@ -7,49 +7,54 @@
 #include <vector>
 #include "fms_error.h"
 #include "fms_linalg.h"
+// https://cppreference.net/cpp/numeric/linalg.html
+// #include <linalg>
 
 namespace fms::perceptron {
 
     // Update weights w given point x and label y in {true, false}
+    // Return if the update trained the data.
     template<class T = double>
-    bool update(std::span<T>& _w, const std::span<T>& _x, bool y, T alpha = 1.0)
+    bool update(std::span<T> w, const std::span<T> x, bool y, T alpha = 1.0)
     {
-        ensure (_w.size() == _x.size() || !"weight and point must have the same size");
+        ensure (w.size() == x.size() || !"weight and point must have the same size");
+		// changed int y to bool y so we don't need this check
         //ensure (y == 0 or y == 1 || !"label must be 0 or 1");
-
-		std::span<T> w(_w.data(), _w.size());
-		std::span<T> x(_x.data(), _x.size());
 
 		bool y_ = fms::linalg::dot(w, x) > 0;
         // Check if misclassified
-        if (y_ * y < 0) {
-            // Update: w = w + alpha dy x    ,
-            fms::linalg::axpy(alpha * (y - y), x, w, w);
+        if (y_ != y) {
+            // Update: w = alpha dy x + w   ,
+            fms::linalg::axpy(alpha * (y - y_), x, w, w);
         }
+
         return y == y_;
     }
-    /*
+
+    // loop updates until trained
+    // return the number of iterations
     template<class T = double>
-    bool train(const std::span<const T>& x, bool y, T alpha = 1.0, std::size_t n = 100)
+    std::size_t train(std::span<T> w, std::span<T> x, bool y, T alpha = 1.0, std::size_t n = 100)
     {
+        size_t n0 = n;
+
         while (n && false == fms::perceptron::update(w, x, y, alpha)) {
             --n; // limit loops
         }
 
-        return n != 0;
+        return n0 - n;
     }
-    */
 
     template<class T = double>
-    struct neuron {
+    class neuron {
         std::vector<T> w;
-
-        neuron(size_t n)
+    public:
+        neuron(size_t n = 0)
             : w(n)
 		{ }
         // RAII
         neuron(std::span<T> w)
-            : w(w)
+            : w(w.begin(), w.end())
         { }
         neuron(const neuron&) = default;
         neuron& operator=(const neuron&) = default;
@@ -57,23 +62,24 @@ namespace fms::perceptron {
         neuron& operator=(neuron&&) = default;
         ~neuron() = default;
 
-        void update(const std::span<const T>& x, int y, double alpha = 1.0, std::size_t n = 100)
+        std::span<T> weights()
         {
-            fms::perceptron::update(w, x, y, alpha);
-		}
-        bool train(const std::span<const T>& x, bool y, T alpha = 1.0, std::size_t n = 100)
-        {
-            while (n && false == fms::perceptron::update(w, x, y, alpha)) {
-                --n; // limit loops
-            }
-            
-            return n != 0;
+            return std::span<T>(w);
         }
 
-        using pair = std::pair<const std::span<const T>, int>;
-        void train(const std::span<pair>& xy, double alpha = 1.0)
+        bool update(const std::span<const T>& x, int y, double alpha = 1.0)
         {
-            for (const auto [x, y] : xy) {
+            return perceptron::update(std::span(w), x, y, alpha);
+		}
+        bool train(std::span<T>& x, bool y, T alpha = 1.0, std::size_t n = 100)
+        {
+			return perceptron::train(w, x, y, alpha, n);
+        }
+		// Train collection of (x,y) pairs.
+        using pair = std::pair<std::span<T>, int>;
+        void train(std::span<pair> xy, double alpha = 1.0)
+        {
+            for (auto [x, y] : xy) {
                 train(x, y, alpha);
             }
         }

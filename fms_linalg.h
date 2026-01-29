@@ -8,7 +8,8 @@
 namespace fms::linalg {
 
 	// Compute the dot product of two vectors
-	template<class T>
+	// https://en.cppreference.com/w/cpp/algorithm/inner_product.html
+	template<class T = double>
 	constexpr T dot(std::size_t n, T* x, T* y)
 	{
 		return std::inner_product(x, x + n, y, T(0));
@@ -31,10 +32,10 @@ namespace fms::linalg {
 			return dot(s1, s2) == 32.0;
 		}
 		static_assert(test_dot(), "dot product test failed");
-
 	}
 	
 	// z = a * x + y
+	// BLAS level 1 axpy
 	template<class T>
 	constexpr void axpy(T a, std::span<T> x, std::span<T> y, std::span<T> z)
 	{
