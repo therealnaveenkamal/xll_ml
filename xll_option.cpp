@@ -118,35 +118,6 @@ double WINAPI xll_option_black_put(double f, double s, double k, HANDLEX m) {
 }
 
 AddIn xai_option_black_call(
-    Function(XLL_DOUBLE, L"xll_option_black_call", CATEGORY L".BLACK.CALL")
-        .Arguments({
-            Arg(XLL_DOUBLE, L"f", L"is the forward price."),
-            Arg(XLL_DOUBLE, L"s", L"is the volatility."),
-            Arg(XLL_DOUBLE, L"k", L"is the strike price."),
-            Arg(XLL_HANDLEX, L"m", L"is the handle to a model."),
-        })
-        .Category(CATEGORY)
-        .FunctionHelp(
-            L"Return price of a European call option under the model."));
-double WINAPI xll_option_black_call(double f, double s, double k, HANDLEX m) {
-#pragma XLLEXPORT
-  double result = NaN<double>;
-
-  try {
-    handle<model<>> m_(m);
-    ensure(m_);
-
-    result = black::call(f, s, k, *m_);
-  } catch (const std::exception &ex) {
-    XLL_ERROR(ex.what());
-  } catch (...) {
-    XLL_ERROR(__FUNCTION__ ": unknown exception");
-  }
-
-  return result;
-}
-
-AddIn xai_option_black_call(
 	Function(XLL_DOUBLE, L"xll_option_black_call", CATEGORY L".BLACK.CALL")
 	.Arguments({
 		Arg(XLL_DOUBLE, L"f", L"is the forward price."),
