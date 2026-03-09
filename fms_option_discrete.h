@@ -5,9 +5,9 @@
 
 namespace fms::option::discrete {
 	template<class F = double, class S = double>
-	class model : option::base<F, S> {
+	class model : public option::base<F, S> {
 		std::valarray<F> xi, pi; // P(X = x_i) = p_i
-	
+
 		void normalize()
 		{
 			pi /= pi.sum(); // pi.sum() == 1
@@ -26,19 +26,27 @@ namespace fms::option::discrete {
 		//   = sum_{x_i <= x} exp(s x_i - kappa(s)) pi_i
 		F _cdf(F x, S s) const override
 		{
-			return 0; // TODO: implement
+			S kappa = _cgf(s);
+			F sum = 0;
+			for (std::size_t i = 0; i < xi.size(); ++i) {
+				if (xi[i] <= x) {
+					sum += static_cast<F>(std::exp(s * xi[i] - kappa) * pi[i]);
+				}
+			}
+			return sum;
 		}
 	
 		// kappa(s) = log E[exp(s X)] = log sum p_i exp(s x_i)
 		S _cgf(S s) const override
 		{
-			return 0; // TODO: implement
+			S sum = 0;
+			for (std::size_t i = 0; i < xi.size(); ++i) {
+				sum += pi[i] * std::exp(s * xi[i]);
+			}
+			return std::log(sum);
 		}
+
+		// Return normalized xi values for use in Excel
+		const std::valarray<F>& xi_values() const { return xi; }
 	};
 } // namespace fms::option::discrete
-
-// TODO: Create xll_option_discrete.cpp based on xll_option_normal.cpp
-// TODO: Implement add-in for \OPTION.DISCRETE
-// TODO: Implement add-in for OPTION.DISCRETE to return normalized xi values
-// TODO: Load add-in and follow comments in final.xlsx.
-// TODO: Put link to your GitHub repository on Brightspace submission.
